@@ -1,0 +1,12 @@
+{
+  "cSpell.words": [
+    "by",
+    "element",
+    "get",
+    "id"
+  ],
+  "go.toolsEnvVars": {
+    "GOARCH": "wasm",
+    "GOOS": "js"
+  }
+}

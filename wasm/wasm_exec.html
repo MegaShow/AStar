@@ -1,0 +1,109 @@
+<!doctype html>
+<!--
+Copyright 2018 The Go Authors. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+-->
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>AStar</title>
+  <style>
+    body {
+      text-align: center;
+    }
+
+    .puzzle-box {
+      padding: 100px 0;
+      margin: auto;
+      width: 400px;
+    }
+
+    .puzzle-in {
+      display: inline-block;
+      width: 100px;
+      border: 1px solid gray;
+      margin: 10px;
+    }
+
+  </style>
+</head>
+
+<body>
+    <button id="autoButton">Auto</button>
+  <button id="sumButton" disabled>NextStep</button>
+  <div class="puzzle-box">
+    <p>当前最优节点：</p>
+    <div class="puzzle-in"></div>
+    <div class="puzzle-in"></div>
+    <div class="puzzle-in"></div>
+    <div class="puzzle-in"></div>
+    <div class="puzzle-in"></div>
+    <div class="puzzle-in"></div>
+    <div class="puzzle-in"></div>
+    <div class="puzzle-in"></div>
+    <div class="puzzle-in"></div>
+  </div>
+  <p>最优节点估值：<span id="value"></span></p>
+  <p>已搜索节点：<span id="searched"></span></p>
+  <p>Open表节点数： <span id="opened"></span></p>
+  <script src="wasm_exec.js"></script>
+  <script>
+    var currentNode, currentValue, searchedNode, isSuccess, isEnd, opened;
+    if (!WebAssembly.instantiateStreaming) { // polyfill
+      WebAssembly.instantiateStreaming = async (resp, importObject) => {
+        const source = await (await resp).arrayBuffer();
+        return await WebAssembly.instantiate(source, importObject);
+      };
+    }
+    const go = new Go();
+    let mod, inst;
+    WebAssembly.instantiateStreaming(fetch('index.wasm'), go.importObject).then(async (result) => {
+      mod = result.module;
+      inst = result.instance;
+      document.getElementById('sumButton').disabled = false;
+      await go.run(inst);
+      inst = await WebAssembly.instantiate(mod, go.importObject);
+    });
+
+    let doing = async function () {
+      await next();
+      console.log(currentNode, currentValue, searchedNode, isSuccess, isEnd, opened);
+      if(isSuccess === true || isEnd === true) {
+        return
+      }
+      let values = currentNode.split(",")
+      let nodeValues = document.getElementsByClassName("puzzle-in")
+      for (let i = 0; i < nodeValues.length; i++) {
+        nodeValues[i].innerHTML = values[i]
+      }
+      document.getElementById("value").innerHTML = currentValue
+      document.getElementById("searched").innerHTML = searchedNode
+      document.getElementById("opened").innerHTML = opened
+    }
+
+    let autoDo = function () {
+      document.getElementById('sumButton').disabled = true;
+      document.getElementById('autoButton').disabled = true;
+      try {
+        doing()
+      } catch(e) {
+
+      }
+      if (isSuccess !== true && isEnd !== true) {
+        setTimeout(autoDo, 300);
+      } else {
+        document.getElementById('sumButton').disabled = false;
+        document.getElementById('autoButton').disabled = false;
+      }
+
+    }
+
+    document.getElementById("sumButton").onclick = doing
+    document.getElementById("autoButton").onclick = autoDo
+  </script>
+  </div>
+</body>
+
+</html>
