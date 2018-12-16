@@ -8,9 +8,47 @@ type Info struct {
 	Opened       int
 }
 
+func getInvSum(arr []int) int {
+	sum := 0
+	for i := range arr {
+		if arr[i] != 0 {
+			for j := 0; j < i; j++ {
+				if arr[j] > arr[i] {
+					sum++
+				}
+			}
+		}
+	}
+	// fmt.Println(sum)
+	return sum
+}
+
+func isValid(start, end []int) bool {
+	return getInvSum(start)%2 == getInvSum(end)%2
+}
+
 func AStarNextStep() func() Info {
-	start := NewNode([]int{2, 8, 3, 1, 6, 4, 7, 0, 5})
-	end := NewNode([]int{1, 2, 3, 8, 0, 4, 7, 6, 5})
+	// 复杂搜索
+	startArr := []int{3, 6, 1, 2, 8, 7, 4, 5, 0}
+	endArr := []int{1, 2, 3, 8, 0, 4, 7, 6, 5}
+
+	// 简单搜索
+	// startArr := []int{2, 8, 3, 1, 6, 4, 7, 0, 5}
+	// endArr := []int{1, 2, 3, 8, 0, 4, 7, 6, 5}
+
+
+	if !isValid(startArr, endArr) {
+		return func() Info {
+			return Info{
+				SearchedNode: 0,
+				isEnd:        true,
+				isSuccess:    false,
+				Opened:       0,
+			}
+		}
+	}
+	start := NewNode(startArr)
+	end := NewNode(endArr)
 	var visitedList []Node
 	var exploreList []Node
 	var currentNode Node
@@ -32,6 +70,7 @@ func AStarNextStep() func() Info {
 		SearchedNode++
 		currentNode = pollMinNode(&exploreList)
 		if currentNode.Equals(&end) {
+			currentNode.Value = getValue(currentNode, end)
 			return Info{
 				isSuccess:    true,
 				isEnd:        true,
@@ -67,14 +106,20 @@ func getValue(node Node, end Node) int {
 	s := 0 // 不正确的码数
 	d := 0 // 放错的码距离之和
 	for i := 0; i < 9; i++ {
-		if node.State[i] != end.State[i] {
+		if end.State[i] != 0 && node.State[i] != end.State[i] {
 			s++
 		}
 		if node.State[i] != 0 {
-			x := node.State[i] % 3
-			y := node.State[i] / 3
-			cx := end.State[i] % 3
-			cy := end.State[i] / 3
+			x := i % 3
+			y := i / 3
+			var cx, cy int
+			for j := 0; j < 9; j++ {
+				if node.State[i] == end.State[j] {
+					cx = j % 3
+					cy = j / 3
+					break
+				}
+			}
 			dx := x - cx
 			dy := y - cy
 			if dx < 0 {
@@ -83,10 +128,10 @@ func getValue(node Node, end Node) int {
 			if dy < 0 {
 				dy = -dy
 			}
-			d += int(dx + dy)
+			d += dx + dy
 		}
 	}
-	return end.Depth*5 + s*2 + d*4
+	return node.Depth + d // node.Depth + s*2 + d*4
 }
 
 func contains(src *[]Node, node Node) bool {
@@ -99,16 +144,18 @@ func contains(src *[]Node, node Node) bool {
 }
 
 func pushNode(src *[]Node, node Node) *[]Node {
-	// fmt.Println(*src, node)
+	// fmt.Println("s:", *src, node)
 	if len(*src) == 0 {
 		*src = append(*src, node)
 		return src
 	}
 	for i := range *src {
 		if (*src)[i].Value > node.Value {
-			*src = append((*src)[:i], node)
-			if len(*src) > i + 1 {
-				*src = append(*src, (*src)[i + 1:]...)
+			 ori :=  make([]Node, len(*src))
+			copy(ori, *src)
+			*src = append(ori[:i], node)
+			if len(ori) >= i {
+				*src = append(*src, ori[i:]...)
 			}
 			break
 		}
@@ -116,7 +163,7 @@ func pushNode(src *[]Node, node Node) *[]Node {
 			*src = append(*src, node)
 		}
 	}
-	// fmt.Println(*src)
+	// fmt.Println("after:", *src)
 	return src
 }
 

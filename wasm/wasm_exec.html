@@ -31,8 +31,9 @@ license that can be found in the LICENSE file.
 </head>
 
 <body>
-    <button id="autoButton">Auto</button>
-  <button id="sumButton" disabled>NextStep</button>
+  <button id="autoButton">Auto</button>
+  <button id="stopButton" disabled>Stop</button>
+  <button id="nextButton" disabled>NextStep</button>
   <div class="puzzle-box">
     <p>当前最优节点：</p>
     <div class="puzzle-in"></div>
@@ -48,10 +49,12 @@ license that can be found in the LICENSE file.
   <p>最优节点估值：<span id="value"></span></p>
   <p>已搜索节点：<span id="searched"></span></p>
   <p>Open表节点数： <span id="opened"></span></p>
+  <p>当前节点深度：<span id="depth"></span></p>
+  <div id="lastNodes"><p>父节点:</p></div>
   <script src="wasm_exec.js"></script>
   <script>
-    var currentNode, currentValue, searchedNode, isSuccess, isEnd, opened;
-    if (!WebAssembly.instantiateStreaming) { // polyfill
+    var currentNode, currentValue, searchedNode, isSuccess, isEnd, opened, currentDeep, lastNode;
+    if (!WebAssembly.instantiateStreaming) {
       WebAssembly.instantiateStreaming = async (resp, importObject) => {
         const source = await (await resp).arrayBuffer();
         return await WebAssembly.instantiate(source, importObject);
@@ -62,17 +65,14 @@ license that can be found in the LICENSE file.
     WebAssembly.instantiateStreaming(fetch('index.wasm'), go.importObject).then(async (result) => {
       mod = result.module;
       inst = result.instance;
-      document.getElementById('sumButton').disabled = false;
+      document.getElementById('nextButton').disabled = false;
       await go.run(inst);
       inst = await WebAssembly.instantiate(mod, go.importObject);
     });
 
     let doing = async function () {
       await next();
-      console.log(currentNode, currentValue, searchedNode, isSuccess, isEnd, opened);
-      if(isSuccess === true || isEnd === true) {
-        return
-      }
+      console.log(currentNode, currentValue, searchedNode, isSuccess, isEnd, opened, currentDeep);
       let values = currentNode.split(",")
       let nodeValues = document.getElementsByClassName("puzzle-in")
       for (let i = 0; i < nodeValues.length; i++) {
@@ -81,10 +81,20 @@ license that can be found in the LICENSE file.
       document.getElementById("value").innerHTML = currentValue
       document.getElementById("searched").innerHTML = searchedNode
       document.getElementById("opened").innerHTML = opened
+      document.getElementById("depth").innerHTML = currentDeep
+      if(isSuccess === true || isEnd === true) {
+        document.getElementById('nextButton').disabled = true;
+        if (isEnd === true && isSuccess === false) {
+          alert("找不到结果")
+        }
+        return
+      }
     }
+    let timeTask
 
     let autoDo = function () {
-      document.getElementById('sumButton').disabled = true;
+      document.getElementById('stopButton').disabled = false;
+      document.getElementById('nextButton').disabled = true;
       document.getElementById('autoButton').disabled = true;
       try {
         doing()
@@ -92,15 +102,31 @@ license that can be found in the LICENSE file.
 
       }
       if (isSuccess !== true && isEnd !== true) {
-        setTimeout(autoDo, 300);
+        timeTask = setTimeout(autoDo, 15);
       } else {
-        document.getElementById('sumButton').disabled = false;
+        document.getElementById('nextButton').disabled = false;
         document.getElementById('autoButton').disabled = false;
       }
-
     }
 
-    document.getElementById("sumButton").onclick = doing
+    let stopDo = function () {
+      if (timeTask !== undefined) {
+        clearTimeout(timeTask)
+        document.getElementById('autoButton').disabled = false
+        document.getElementById('nextButton').disabled = false;
+      }
+    }
+
+    window.clearParent = function () {
+      document.getElementById("lastNodes").innerHTML = '<p>父节点：</p>'
+    }
+
+    window.addParent = function (text) {
+      document.getElementById("lastNodes").innerHTML += '<p>' + text + '</p>'
+    }
+
+    document.getElementById('stopButton').onclick = stopDo
+    document.getElementById("nextButton").onclick = doing
     document.getElementById("autoButton").onclick = autoDo
   </script>
   </div>

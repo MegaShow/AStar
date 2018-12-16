@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"syscall/js"
 )
 
@@ -14,8 +15,17 @@ func registerCallbacks() {
 		global.Set("currentValue", js.ValueOf(info.CurrentNode.Value))
 		global.Set("searchedNode", js.ValueOf(info.SearchedNode))
 		global.Set("isSuccess", js.ValueOf(info.isSuccess))
+		global.Set("currentDeep", js.ValueOf(info.CurrentNode.Depth))
 		global.Set("isEnd", js.ValueOf(info.isEnd))
 		global.Set("opened", js.ValueOf(info.Opened))
+		if info.isSuccess {
+			finishNode := info.CurrentNode
+			global.Call("clearParent")
+			for finishNode.Parent !=  nil {
+				global.Call("addParent", js.ValueOf(finishNode.ToString() + ":" + strconv.Itoa(finishNode.Value)))
+				finishNode = CopyNode(*finishNode.Parent)
+			}
+		}
 	})
 	global.Set("next", onSum)
 }
