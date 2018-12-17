@@ -36,7 +36,6 @@ func AStarNextStep() func() Info {
 	// startArr := []int{2, 8, 3, 1, 6, 4, 7, 0, 5}
 	// endArr := []int{1, 2, 3, 8, 0, 4, 7, 6, 5}
 
-
 	if !isValid(startArr, endArr) {
 		return func() Info {
 			return Info{
@@ -151,7 +150,7 @@ func pushNode(src *[]Node, node Node) *[]Node {
 	}
 	for i := range *src {
 		if (*src)[i].Value > node.Value {
-			 ori :=  make([]Node, len(*src))
+			ori := make([]Node, len(*src))
 			copy(ori, *src)
 			*src = append(ori[:i], node)
 			if len(ori) >= i {

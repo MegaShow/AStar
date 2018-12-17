@@ -21,8 +21,9 @@ func registerCallbacks() {
 		if info.isSuccess {
 			finishNode := info.CurrentNode
 			global.Call("clearParent")
-			for finishNode.Parent !=  nil {
-				global.Call("addParent", js.ValueOf(finishNode.ToString() + ":" + strconv.Itoa(finishNode.Value)))
+			for finishNode.Parent != nil {
+				global.Call("addParent", js.ValueOf(finishNode.ToString()+":"+strconv.Itoa(finishNode.Value)+"="+strconv.Itoa(finishNode.Depth)+
+					"+"+strconv.Itoa(finishNode.Value-finishNode.Depth)))
 				finishNode = CopyNode(*finishNode.Parent)
 			}
 		}

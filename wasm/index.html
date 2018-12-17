@@ -31,7 +31,7 @@ license that can be found in the LICENSE file.
 </head>
 
 <body>
-  <button id="autoButton">Auto</button>
+  <button id="autoButton" disabled>Auto</button>
   <button id="stopButton" disabled>Stop</button>
   <button id="nextButton" disabled>NextStep</button>
   <div class="puzzle-box">
@@ -62,10 +62,12 @@ license that can be found in the LICENSE file.
     }
     const go = new Go();
     let mod, inst;
+
     WebAssembly.instantiateStreaming(fetch('index.wasm'), go.importObject).then(async (result) => {
       mod = result.module;
       inst = result.instance;
       document.getElementById('nextButton').disabled = false;
+      document.getElementById('autoButton').disabled = false;
       await go.run(inst);
       inst = await WebAssembly.instantiate(mod, go.importObject);
     });
