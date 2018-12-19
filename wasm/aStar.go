@@ -27,8 +27,44 @@ func isValid(start, end []int) bool {
 	return getInvSum(start)%2 == getInvSum(end)%2
 }
 
+func getValue(node Node, end Node) int {
+	s := 0 // 不正确的码数
+	d := 0 // 放错的码距离之和
+	for i := 0; i < 9; i++ {
+		if end.State[i] != 0 && node.State[i] != end.State[i] {
+			s++
+		}
+		if node.State[i] != 0 {
+			x := i % 3
+			y := i / 3
+			var cx, cy int
+			for j := 0; j < 9; j++ {
+				if node.State[i] == end.State[j] {
+					cx = j % 3
+					cy = j / 3
+					break
+				}
+			}
+			dx := x - cx
+			dy := y - cy
+			if dx < 0 {
+				dx = -dx
+			}
+			if dy < 0 {
+				dy = -dy
+			}
+			d += dx + dy
+		}
+	}
+	// return node.Depth + s
+	return node.Depth + d
+}
+
 func AStarNextStep() func() Info {
 	// 复杂搜索
+	// startArr := []int{6, 1, 2, 4, 3, 8, 7, 5, 0}
+	// endArr := []int{1, 2, 3, 8, 0, 4, 7, 6, 5}
+
 	startArr := []int{3, 6, 1, 2, 8, 7, 4, 5, 0}
 	endArr := []int{1, 2, 3, 8, 0, 4, 7, 6, 5}
 
@@ -99,38 +135,6 @@ func AStarNextStep() func() Info {
 			Opened:       len(exploreList),
 		}
 	}
-}
-
-func getValue(node Node, end Node) int {
-	s := 0 // 不正确的码数
-	d := 0 // 放错的码距离之和
-	for i := 0; i < 9; i++ {
-		if end.State[i] != 0 && node.State[i] != end.State[i] {
-			s++
-		}
-		if node.State[i] != 0 {
-			x := i % 3
-			y := i / 3
-			var cx, cy int
-			for j := 0; j < 9; j++ {
-				if node.State[i] == end.State[j] {
-					cx = j % 3
-					cy = j / 3
-					break
-				}
-			}
-			dx := x - cx
-			dy := y - cy
-			if dx < 0 {
-				dx = -dx
-			}
-			if dy < 0 {
-				dy = -dy
-			}
-			d += dx + dy
-		}
-	}
-	return node.Depth + d // node.Depth + s*2 + d*4
 }
 
 func contains(src *[]Node, node Node) bool {

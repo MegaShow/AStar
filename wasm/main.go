@@ -9,6 +9,7 @@ var nextStep = AStarNextStep()
 
 func registerCallbacks() {
 	global := js.Global()
+
 	onSum := js.NewCallback(func(args []js.Value) {
 		info := nextStep()
 		global.Set("currentNode", js.ValueOf(info.CurrentNode.ToString()))
